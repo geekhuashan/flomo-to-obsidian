@@ -18,7 +18,8 @@
 <br />
 
 ### Features supported
-- `Auto Sync` & `Adhoc Sync`
+- `Auto Sync On Startup` & `Hourly Auto Sync` & `Adhoc Sync`
+- `Incremental Sync` (skip already imported memos)
 - Customize target import location
 - Support highlight mark
 - Optional: Create `Flomo Canvas` (with content | file link)
@@ -131,13 +132,20 @@ lib/
 
     <img width="252" alt="image" src="https://github.com/jia6y/flomo-to-obsidian/assets/1456952/b1bd2399-87f1-4d60-80cf-111bbce8fe68">
 
+## Plugin Settings
 
-<br />
+You can customize the following options in the plugin settings page:
 
-### Support 🧑🏻‍💻
-Please feel free to reach out or log an Issue if there are any questions. :)  
-<br />
-[Discussion](https://github.com/jia6y/flomo-to-obsidian/discussions)
+- **Auto Sync On Startup**: Automatically sync when Obsidian is launched.
+- **Auto Sync Interval**: Automatically sync every hour.
+- **Incremental Sync**: Skip already imported memos and only import new ones.
+- **Merge Memos by Date**: Merge multiple memos from the same day into a single file.
+- **Flomo Target**: Folder in Obsidian vault to store Flomo memos (default: `flomo`).
+- **Memo Target**: Subfolder under Flomo folder to store individual memos (default: `memos`).
+- **Canvas & Moments Options**: Select display options for Flomo Canvas and Moments.
+
+
+
 
 
 
