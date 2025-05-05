@@ -2,8 +2,7 @@
 
 ##### ☕️ Make Flomo Memos to Obsidian Notes.
 
-- Author: [Jialu Y](https://github.com/jia6y)
-- Discussion: [Disucssion](https://github.com/jia6y/flomo-to-obsidian/discussions)
+- Discussion: [Discussion](https://github.com/jia6y/flomo-to-obsidian/discussions)
 <br />
 
 <img width="500" alt="image" src="https://github.com/jia6y/flomo-to-obsidian/assets/1456952/bbbf6658-b93e-4b81-b087-0dd8687958ad">
@@ -26,6 +25,59 @@
 - Optional: Create `Flomo Moments`
 - Experimental: Support Bi-directional Links in memos
 - Experimental: Merge Memos by date
+
+<br />
+
+## 项目结构概览
+
+```
+esbuild.config.mjs  - 构建配置文件
+main.ts             - 插件入口文件
+manifest.json       - 插件元数据
+package.json        - 项目依赖和脚本
+lib/
+  flomo/            - Flomo相关功能
+    auth.ts         - 认证功能
+    const.ts        - 常量定义
+    core.ts         - 核心功能
+    exporter.ts     - 导出功能
+    importer.ts     - 导入功能
+  obIntegration/    - Obsidian集成
+    canvas.ts       - Canvas功能
+    moments.ts      - Moments功能
+  ui/               - 用户界面
+    auth_ui.ts      - 认证界面
+    common.ts       - 通用UI组件
+    main_ui.ts      - 主界面
+    manualsync_ui.ts- 手动同步界面
+    message_ui.ts   - 消息界面
+```
+
+## 开发与修改指南
+
+### 开发环境设置
+1. 克隆仓库
+2. 安装依赖：`npm install`
+3. 安装Playwright (必需)：`npx playwright@1.43.1 install`
+
+### 修改模板和格式
+如果需要修改导入的笔记格式或模板:
+- 编辑 `lib/flomo/importer.ts` - 负责将Flomo笔记转换为Obsidian格式
+- 编辑 `lib/obIntegration/moments.ts` - 修改Moments功能的显示方式
+- 编辑 `lib/obIntegration/canvas.ts` - 修改Canvas展示格式
+
+### 修改UI
+- UI相关的修改主要集中在 `lib/ui/` 目录下
+- 样式修改可以在 `styles.css` 文件中进行
+
+### 构建项目
+- 开发模式 (实时编译): `npm run dev`
+- 生产构建: `npm run build`
+- 构建后的文件为 `main.js`
+
+### 版本管理
+- 版本更新: `npm run version`
+- 版本信息在 `manifest.json` 和 `versions.json` 中定义
 
 <br />
 
@@ -83,15 +135,9 @@
 <br />
 
 ### Support 🧑🏻‍💻
-Please feel free to reach out to me or log an Issue here if there are any questions. :)  
+Please feel free to reach out or log an Issue if there are any questions. :)  
 <br />
-[Disucssion](https://github.com/jia6y/flomo-to-obsidian/discussions)
-
-<br />
-
-### Buy me a coffee ☕️
-
-<img width="224" alt="image" src="https://github.com/user-attachments/assets/9eb7c52f-6d82-4677-888c-a6b1eb632470">
+[Discussion](https://github.com/jia6y/flomo-to-obsidian/discussions)
 
 
 
