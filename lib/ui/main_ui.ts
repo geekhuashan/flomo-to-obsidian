@@ -65,9 +65,18 @@ export class MainUI extends Modal {
             const config = this.plugin.settings;
             config["rawDir"] = this.rawPath;
 
+            // 将已同步的备忘录ID传递给导入器，用于增量同步
+            config["syncedMemoIds"] = this.plugin.settings.syncedMemoIds || [];
+
             const flomo = await (new FlomoImporter(this.app, config)).import();
 
-            new Notice(`🎉 Import Completed.\nTotal: ${flomo.memos.length} memos`)
+            // 保存新同步的备忘录ID
+            if (flomo.syncedMemoIds && flomo.syncedMemoIds.length > 0) {
+                this.plugin.settings.syncedMemoIds = flomo.syncedMemoIds;
+                await this.plugin.saveSettings();
+            }
+
+            new Notice(`🎉 Import Completed.\nTotal: ${flomo.memos.length} memos, New: ${flomo.newMemosCount || 0} memos`)
             this.rawPath = "";
 
 
@@ -197,7 +206,37 @@ export class MainUI extends Modal {
             this.plugin.settings.mergeByDate = ev.currentTarget.checked;
         };
 
+        new Setting(contentEl).setName('Auto Sync Options').setDesc('set auto sync options')
 
+        const autoSyncOnStartup = createExpOpt(contentEl, "Auto sync when Obsidian starts")
+
+        autoSyncOnStartup.checked = this.plugin.settings.autoSyncOnStartup;
+        autoSyncOnStartup.onchange = (ev) => {
+            this.plugin.settings.autoSyncOnStartup = ev.currentTarget.checked;
+        };
+
+        const autoSyncInterval = createExpOpt(contentEl, "Auto sync every hour")
+
+        autoSyncInterval.checked = this.plugin.settings.autoSyncInterval;
+        autoSyncInterval.onchange = (ev) => {
+            this.plugin.settings.autoSyncInterval = ev.currentTarget.checked;
+            if (ev.currentTarget.checked) {
+                // 如果启用了每小时同步，立即开始定时任务
+                (this.plugin as any).startAutoSync();
+            } else {
+                // 如果禁用了每小时同步，停止定时任务
+                (this.plugin as any).stopAutoSync();
+            }
+        };
+
+        // 显示上次同步时间
+        if (this.plugin.settings.lastSyncTime) {
+            const lastSyncDate = new Date(this.plugin.settings.lastSyncTime);
+            contentEl.createEl("div", { 
+                text: `Last sync: ${lastSyncDate.toLocaleString()}`, 
+                cls: "last-sync-time" 
+            });
+        }
 
         new Setting(contentEl)
             .addButton((btn) => {
