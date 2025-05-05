@@ -29,30 +29,100 @@
 
 <br />
 
-## 项目结构概览
+## 功能详解 (Features in Detail)
+
+This plugin offers several ways to import and manage your Flomo notes within Obsidian:
+
+- **多种同步方式 (Multiple Sync Methods):**
+  - **启动时自动同步 (Auto Sync On Startup):** Enable this in settings to automatically sync when Obsidian starts.
+  - **每小时自动同步 (Hourly Auto Sync):** Enable this in settings for automatic background sync every hour.
+  - **手动同步 (Adhoc Sync / Manual Sync):**
+    - **自动导出与导入 (Auto Export & Import):** Click the "Sync Now" button in the plugin UI. This uses Playwright to log in to Flomo, export your notes as HTML, and import them.
+    - **手动导入 (Manual Import):** Export your notes as HTML (`flomo_backup.zip`) from the Flomo website yourself, then select the zip file in the plugin UI to import.
+- **增量同步 (Incremental Sync):** The core feature. The plugin intelligently identifies and imports only *new* memos since the last sync, preventing duplicates. It remembers which memos have been imported.
+- **自定义导入位置 (Customizable Import Location):** Specify the target folder in your Obsidian vault for imported Flomo notes (`Flomo Target`) and a subfolder for individual memos (`Memo Target`).
+- **支持高亮标记 (Highlight Support):** Correctly converts Flomo's `<mark>` tags to Obsidian's `==highlight==` syntax.
+- **Obsidian 集成 (Obsidian Integrations):**
+  - **Flomo Canvas:** Optionally generates an Obsidian Canvas file visualizing your memos, either linking to the memo files or embedding the content directly.
+  - **Flomo Moments:** Optionally generates a `Flomo Moments.md` file that embeds links to all imported memo files, providing a chronological overview.
+- **实验性功能 (Experimental Features):**
+  - **双向链接支持 (Bi-directional Link Support):** Attempts to preserve `[[wiki-links]]` within your memo content during import.
+  - **按日期合并笔记 (Merge Memos by Date):** Option to merge all memos from the same day into a single Obsidian note, separated by `---`.
+
+<br />
+
+## 代码库结构 (Codebase Structure)
+
+The project is organized as follows:
 
 ```
-esbuild.config.mjs  - 构建配置文件
-main.ts             - 插件入口文件
-manifest.json       - 插件元数据
-package.json        - 项目依赖和脚本
-lib/
-  flomo/            - Flomo相关功能
-    auth.ts         - 认证功能
-    const.ts        - 常量定义
-    core.ts         - 核心功能
-    exporter.ts     - 导出功能
-    importer.ts     - 导入功能
-  obIntegration/    - Obsidian集成
-    canvas.ts       - Canvas功能
-    moments.ts      - Moments功能
-  ui/               - 用户界面
-    auth_ui.ts      - 认证界面
-    common.ts       - 通用UI组件
-    main_ui.ts      - 主界面
-    manualsync_ui.ts- 手动同步界面
-    message_ui.ts   - 消息界面
+esbuild.config.mjs  # Build configuration for esbuild (compiles TS to JS)
+main.ts             # Plugin entry point: loads settings, adds commands/icons, initializes UI and auto-sync
+manifest.json       # Plugin metadata (name, version, author, etc.)
+package.json        # Project dependencies and npm scripts (build, dev, version)
+styles.css          # Custom CSS styles for the plugin UI
+versions.json       # Version history (used by BRAT)
+lib/                # Core logic directory
+  flomo/            # Flomo-specific functionalities
+    auth.ts         # Handles authentication logic (likely using Playwright)
+    const.ts        # Defines constants (like cache paths, filenames)
+    core.ts         # Core data processing: parses HTML, identifies memos, generates IDs for incremental sync
+    exporter.ts     # Handles exporting data from Flomo (using Playwright)
+    importer.ts     # Handles importing data into Obsidian: reads files, uses FlomoCore, writes notes
+  obIntegration/    # Obsidian-specific integrations
+    canvas.ts       # Logic for generating the Flomo Canvas file
+    moments.ts      # Logic for generating the Flomo Moments file
+  ui/               # User Interface components
+    auth_ui.ts      # UI modal for Flomo authentication
+    common.ts       # Shared UI helper functions or components
+    main_ui.ts      # Main plugin settings and action UI modal
+    manualsync_ui.ts# UI section/modal for manual zip file import
+    message_ui.ts   # UI components for displaying messages/notices
+node_modules/       # Installed npm dependencies
 ```
+
+<br/>
+
+## 同步逻辑详解 (Synchronization Logic Explained)
+
+Understanding how synchronization works, especially incrementally:
+
+1.  **触发 (Trigger):** Sync can be triggered automatically (on startup, hourly timer via `main.ts`) or manually (clicking "Sync Now" in `main_ui.ts` or using the "Sync Flomo Now" command).
+2.  **导出 (Export - Auto Sync/Sync Now Button):**
+    *   The `FlomoExporter` utilizes Playwright (a browser automation tool) to:
+        *   Log in to your Flomo account (using credentials potentially stored securely).
+        *   Navigate to the export page.
+        *   Download the full backup as an HTML file (saved to a location defined in `const.ts`, e.g., `DOWNLOAD_FILE`).
+3.  **导入入口 (Import Entry Point):**
+    *   The `FlomoImporter` class is instantiated.
+    *   The `importFlomoFile` method is called, passing the path to the downloaded HTML file (`DOWNLOAD_FILE`).
+4.  **数据读取与解析 (Data Reading & Parsing):**
+    *   `FlomoImporter` reads the HTML file content.
+    *   It calls `FlomoCore`'s constructor, passing the HTML data and the list of already synced memo IDs (`syncedMemoIds`) loaded from the plugin's saved settings (`this.settings.syncedMemoIds`).
+5.  **核心处理与增量识别 (`FlomoCore`):**
+    *   The constructor parses the HTML structure.
+    *   The `loadMemos` method iterates through each memo element (`<div class="memo">`).
+    *   **Crucially for Incremental Sync:** For *each* memo found in the HTML, a unique `memoId` is generated. This ID is based on a combination of:
+        *   The memo's exact timestamp.
+        *   A hash of its content (title, body, attachments).
+        *   A counter for memos with the *exact same timestamp* (to differentiate them).
+        *   An overall sequential counter.
+    *   This generated `memoId` is compared against the `syncedMemoIds` list received from the settings.
+    *   **If the ID is NOT in the list:** It's considered a **new memo**. Its `memoId` is added to the *instance's* `syncedMemoIds` list, `newMemosCount` is incremented, and the memo's data is added to the `memos` array to be processed.
+    *   **If the ID IS in the list:** It's skipped.
+6.  **写入 Obsidian (`FlomoImporter.importFlomoFile`):**
+    *   The method receives the processed data from `FlomoCore`, including the list of *only the newly identified* memos.
+    *   It groups these new memos by date.
+    *   Based on the "Merge Memos by Date" setting, it writes the content of each new memo (or merged content) to the appropriate file path within the specified `Flomo Target` and `Memo Target` folders in your vault.
+    *   It potentially calls `generateMoments` and `generateCanvas` if enabled.
+7.  **状态保存 (State Saving - `main.ts`):**
+    *   After `importFlomoFile` completes, the plugin calls `saveSettings()`.
+    *   This saves the updated `syncedMemoIds` list (which now includes the IDs of the newly imported memos) and the current `lastSyncTime` back into Obsidian's persistent storage for this plugin. This ensures the *next* sync knows about these newly added memos.
+8.  **通知 (Notification):** A notice is displayed indicating how many memos were found and how many were newly imported.
+
+This detailed ID generation and checking process is the key to reliable incremental synchronization, ensuring only new content is added to your Obsidian vault.
+
+<br />
 
 ## 开发与修改指南
 
