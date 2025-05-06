@@ -1,12 +1,14 @@
 import { App, Modal, Plugin, Setting, Notice } from 'obsidian';
+import * as fs from 'fs-extra';
+import type FlomoImporterPlugin from '../../main';
 import { createExpOpt } from './common';
 
 
 export class ManualSyncUI extends Modal {
-    plugin: Plugin;
+    plugin: FlomoImporterPlugin;
     rawPath: string;
 
-    constructor(app: App, plugin: Plugin) {
+    constructor(app: App, plugin: FlomoImporterPlugin) {
         super(app);
         this.plugin = plugin;
         this.rawPath = "";
@@ -23,7 +25,7 @@ export class ManualSyncUI extends Modal {
         const fileLocContol: HTMLInputElement = contentEl.createEl("input", { type: "file", cls: "uploadbox" })
         fileLocContol.setAttr("accept", ".zip");
         fileLocContol.onchange = (ev) => {
-            this.rawPath = ev.currentTarget.files[0]["path"];
+            this.rawPath = (ev.currentTarget as HTMLInputElement).files[0]["path"];
             console.log(this.rawPath)
         };
 

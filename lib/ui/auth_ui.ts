@@ -2,14 +2,17 @@ import { App, Modal, Plugin, Setting, Notice } from 'obsidian';
 import { createExpOpt } from './common';
 import { MessageUI } from './message_ui'
 import { FlomoAuth } from '../flomo/auth';
+import * as fs from 'fs-extra';
+import { AUTH_FILE } from '../flomo/const';
+import type FlomoImporterPlugin from '../../main';
 
 
 export class AuthUI extends Modal {
-    plugin: Plugin;
+    plugin: FlomoImporterPlugin;
     uid: string;
     passwd: string;
 
-    constructor(app: App, plugin: Plugin) {
+    constructor(app: App, plugin: FlomoImporterPlugin) {
         super(app);
         this.plugin = plugin;
         this.uid = "";
@@ -34,7 +37,7 @@ export class AuthUI extends Modal {
                 "type": "password",
                 "placeholder": "Your password please"
             }).onchange = (ev) => {
-                this.passwd = ev.target.value;
+                this.passwd = (ev.target as HTMLInputElement).value;
             };
 
 

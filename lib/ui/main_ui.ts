@@ -4,6 +4,7 @@ import { createExpOpt } from './common';
 import { AuthUI } from './auth_ui';
 import { FlomoImporter } from '../flomo/importer';
 import { FlomoExporter } from '../flomo/exporter';
+import type FlomoImporterPlugin from '../../main';
 
 import * as path from 'path';
 import * as os from 'os';
@@ -13,10 +14,10 @@ import { AUTH_FILE, DOWNLOAD_FILE } from '../flomo/const'
 
 export class MainUI extends Modal {
 
-    plugin: Plugin;
+    plugin: FlomoImporterPlugin;
     rawPath: string;
 
-    constructor(app: App, plugin: Plugin) {
+    constructor(app: App, plugin: FlomoImporterPlugin) {
         super(app);
         this.plugin = plugin;
         this.rawPath = "";
@@ -96,7 +97,7 @@ export class MainUI extends Modal {
         const fileLocContol: HTMLInputElement = contentEl.createEl("input", { type: "file", cls: "uploadbox" })
         fileLocContol.setAttr("accept", ".zip");
         fileLocContol.onchange = (ev) => {
-            this.rawPath = ev.currentTarget.files[0]["path"];
+            this.rawPath = (ev.currentTarget as HTMLInputElement).files[0]["path"];
             console.log(this.rawPath)
         };
 
@@ -194,7 +195,7 @@ export class MainUI extends Modal {
 
         allowBiLink.checked = this.plugin.settings.expOptionAllowbilink;
         allowBiLink.onchange = (ev) => {
-            this.plugin.settings.expOptionAllowbilink = ev.currentTarget.checked;
+            this.plugin.settings.expOptionAllowbilink = (ev.currentTarget as HTMLInputElement).checked;
         };
 
 
@@ -202,7 +203,7 @@ export class MainUI extends Modal {
 
         mergeByDate.checked = this.plugin.settings.mergeByDate;
         mergeByDate.onchange = (ev) => {
-            this.plugin.settings.mergeByDate = ev.currentTarget.checked;
+            this.plugin.settings.mergeByDate = (ev.currentTarget as HTMLInputElement).checked;
         };
 
         new Setting(contentEl).setName('Auto Sync Options').setDesc('set auto sync options')
@@ -211,15 +212,15 @@ export class MainUI extends Modal {
 
         autoSyncOnStartup.checked = this.plugin.settings.autoSyncOnStartup;
         autoSyncOnStartup.onchange = (ev) => {
-            this.plugin.settings.autoSyncOnStartup = ev.currentTarget.checked;
+            this.plugin.settings.autoSyncOnStartup = (ev.currentTarget as HTMLInputElement).checked;
         };
 
         const autoSyncInterval = createExpOpt(contentEl, "Auto sync every hour")
 
         autoSyncInterval.checked = this.plugin.settings.autoSyncInterval;
         autoSyncInterval.onchange = (ev) => {
-            this.plugin.settings.autoSyncInterval = ev.currentTarget.checked;
-            if (ev.currentTarget.checked) {
+            this.plugin.settings.autoSyncInterval = (ev.currentTarget as HTMLInputElement).checked;
+            if ((ev.currentTarget as HTMLInputElement).checked) {
                 // 如果启用了每小时同步，立即开始定时任务
                 (this.plugin as any).startAutoSync();
             } else {
