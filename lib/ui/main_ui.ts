@@ -45,7 +45,6 @@ export class MainUI extends Modal {
             }
         } catch (err) {
             console.log(err);
-            await fs.remove(AUTH_FILE);
             btn.setButtonText("Auto Sync 🤗");
             new Notice(`Flomo Sync Error. Details:\n${err}`);
         }
